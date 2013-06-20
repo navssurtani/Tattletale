@@ -23,7 +23,6 @@ package org.jboss.tattletale.reporting;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -34,26 +33,25 @@ import java.util.SortedSet;
  * @author Jesper Pedersen <jesper.pedersen@jboss.org>
  * @author <a href="mailto:torben.jaeger@jit-consulting.de">Torben Jaeger</a>
  */
-public class MultipleJarsReport extends AbstractReport
+public class ClassMultipleJarsReport extends AbstractReport
 {
    /** NAME */
-   private static final String NAME = "Multiple Jar files";
+   private static final String NAME = "Multiple Classes";
 
    /** DIRECTORY */
-   private static final String DIRECTORY = "multiplejars";
+   private static final String DIRECTORY = "multiplejarsclass";
 
    /** Globally provides */
    private SortedMap<String, SortedSet<String>> gProvides;
 
    /** Constructor */
-   public MultipleJarsReport()
+   public ClassMultipleJarsReport()
    {
       super(DIRECTORY, ReportSeverity.WARNING, NAME, DIRECTORY);
    }
 
    /**
     * Set the globally provides map to be used in generating this report
-    *
     * @param gProvides the map of global provides
     */
    public void setGlobalProvides(SortedMap<String, SortedSet<String>> gProvides)
@@ -61,10 +59,8 @@ public class MultipleJarsReport extends AbstractReport
       this.gProvides = gProvides;
    }
 
-
    /**
     * write out the report's content
-    *
     * @param bw the writer to use
     * @throws IOException if an error occurs
     */
@@ -73,17 +69,16 @@ public class MultipleJarsReport extends AbstractReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Class</th>" + Dump.newLine());
-      bw.write("     <th>Jar files</th>" + Dump.newLine());
+      bw.write("    <th>Class</th>" + Dump.newLine());
+      bw.write("    <th>Jar files</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       boolean odd = true;
 
       for (Map.Entry<String, SortedSet<String>> entry : gProvides.entrySet())
       {
-
          String clz = entry.getKey();
-         SortedSet archives = entry.getValue();
+         SortedSet<String> archives = entry.getValue();
 
          if (archives.size() > 1)
          {
@@ -101,27 +96,23 @@ public class MultipleJarsReport extends AbstractReport
             {
                bw.write("  <tr class=\"roweven\">" + Dump.newLine());
             }
-            bw.write("     <td>" + clz + "</td>" + Dump.newLine());
+            bw.write("    <td>" + clz + "</td>" + Dump.newLine());
             if (!filtered)
             {
-               bw.write("     <td>");
+               bw.write("    <td>");
             }
             else
             {
-               bw.write("     <td style=\"text-decoration: line-through;\">");
+               bw.write("    <td style=\"text-decoration: line-through;\">");
             }
 
-            Iterator sit = archives.iterator();
-            while (sit.hasNext())
+            StringBuffer list = new StringBuffer();
+            for (String archive: archives)
             {
-               String archive = (String) sit.next();
-               bw.write("<a href=\"../jar/" + archive + ".html\">" + archive + "</a>" + Dump.newLine());
-
-               if (sit.hasNext())
-               {
-                  bw.write(", ");
-               }
+               list.append(hrefToReport(archive)).append(", ");
             }
+            list.setLength(list.length() - 2);
+            bw.write(list.toString());
 
             bw.write("</td>" + Dump.newLine());
             bw.write("  </tr>" + Dump.newLine());
@@ -134,25 +125,7 @@ public class MultipleJarsReport extends AbstractReport
    }
 
    /**
-    * write out the header of the report's content
-    *
-    * @param bw the writer to use
-    * @throws IOException if an errror occurs
-    */
-   public void writeHtmlBodyHeader(BufferedWriter bw) throws IOException
-   {
-      bw.write("<body>" + Dump.newLine());
-      bw.write(Dump.newLine());
-
-      bw.write("<h1>" + NAME + "</h1>" + Dump.newLine());
-
-      bw.write("<a href=\"../index.html\">Main</a>" + Dump.newLine());
-      bw.write("<p>" + Dump.newLine());
-   }
-
-   /**
     * Create filter
-    *
     * @return The filter
     */
    @Override

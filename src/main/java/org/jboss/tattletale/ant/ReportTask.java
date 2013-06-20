@@ -21,9 +21,13 @@
  */
 package org.jboss.tattletale.ant;
 
-import org.jboss.tattletale.Main;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.apache.tools.ant.BuildException;
+
+import org.jboss.tattletale.Main;
 
 /**
  * Implementation class for TattleTale Report Ant Task
@@ -63,24 +67,39 @@ public class ReportTask extends AbstractReportTask
    /** Scan */
    private String scan;
 
+   /** Title */
+   private String title;
+
+   /** Extract pattern */
+   private String extractPattern;
+
+   /** Bundle pattern */
+   private String bundlePattern;
+
+   /** Analyze components */
+   private boolean analyzeComponents;
+
    /** Constructor */
    public ReportTask()
    {
-      this.classloaderStructure = null;
-      this.profiles = null;
-      this.excludes = null;
-      this.blacklisted = null;
-      this.failOnInfo = false;
-      this.failOnWarn = false;
-      this.failOnError = false;
-      this.deleteOutputDirectory = true;
-      this.reports = null;
-      this.scan = null;
+      classloaderStructure = null;
+      profiles = null;
+      excludes = null;
+      blacklisted = null;
+      failOnInfo = false;
+      failOnWarn = false;
+      failOnError = false;
+      deleteOutputDirectory = true;
+      reports = null;
+      scan = null;
+      title = null;
+      extractPattern = null;
+      bundlePattern = null;
+      analyzeComponents = false;
    }
 
    /**
     * Get the class loader structure
-    *
     * @return The value
     */
    public String getClassloader()
@@ -90,17 +109,15 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the class loader structure
-    *
-    * @param cls The value
+    * @param classloaderStructure The value
     */
-   public void setClassloader(String cls)
+   public void setClassloader(String classloaderStructure)
    {
-      this.classloaderStructure = cls;
+      this.classloaderStructure = classloaderStructure;
    }
 
    /**
     * Get the profiles
-    *
     * @return The value
     */
    public String getProfiles()
@@ -110,7 +127,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the profiles
-    *
     * @param profiles The value
     */
    public void setProfiles(String profiles)
@@ -120,7 +136,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Get the excludes
-    *
     * @return The value
     */
    public String getExcludes()
@@ -130,7 +145,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the excludes
-    *
     * @param excludes The value
     */
    public void setExcludes(String excludes)
@@ -140,7 +154,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Get the blacklisted
-    *
     * @return The value
     */
    public String getBlacklisted()
@@ -150,7 +163,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the blacklisted
-    *
     * @param blacklisted The value
     */
    public void setBlacklisted(String blacklisted)
@@ -160,7 +172,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Get fail on info
-    *
     * @return The value
     */
    public boolean getFailOnInfo()
@@ -170,17 +181,15 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set fail on info
-    *
-    * @param b The value
+    * @param failOnInfo The value
     */
-   public void setFailOnInfo(boolean b)
+   public void setFailOnInfo(boolean failOnInfo)
    {
-      this.failOnInfo = b;
+      this.failOnInfo = failOnInfo;
    }
 
    /**
     * Get fail on warn
-    *
     * @return The value
     */
    public boolean getFailOnWarn()
@@ -190,17 +199,15 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set fail on warn
-    *
-    * @param b The value
+    * @param failOnWarn The value
     */
-   public void setFailOnWarn(boolean b)
+   public void setFailOnWarn(boolean failOnWarn)
    {
-      this.failOnWarn = b;
+      this.failOnWarn = failOnWarn;
    }
 
    /**
     * Get fail on error
-    *
     * @return The value
     */
    public boolean getFailOnError()
@@ -210,17 +217,15 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set fail on error
-    *
-    * @param b The value
+    * @param failOnError The value
     */
-   public void setFailOnError(boolean b)
+   public void setFailOnError(boolean failOnError)
    {
-      this.failOnError = b;
+      this.failOnError = failOnError;
    }
 
    /**
     * Get delete output directory
-    *
     * @return The value
     */
    public boolean getDeleteOutputDirectory()
@@ -230,17 +235,15 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set delete output directory
-    *
-    * @param b The value
+    * @param deleteOutputDirectory The value
     */
-   public void setDeleteOutputDirectory(boolean b)
+   public void setDeleteOutputDirectory(boolean deleteOutputDirectory)
    {
-      this.deleteOutputDirectory = b;
+      this.deleteOutputDirectory = deleteOutputDirectory;
    }
 
    /**
     * Get the reports
-    *
     * @return The value
     */
    public String getReports()
@@ -250,7 +253,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the reports
-    *
     * @param reports The value
     */
    public void setReports(String reports)
@@ -260,7 +262,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Get the scan
-    *
     * @return The value
     */
    public String getScan()
@@ -270,7 +271,6 @@ public class ReportTask extends AbstractReportTask
 
    /**
     * Set the scan
-    *
     * @param scan The value
     */
    public void setScan(String scan)
@@ -279,8 +279,100 @@ public class ReportTask extends AbstractReportTask
    }
 
    /**
+    * Get the title
+    * @return The value
+    */
+   public String getTitle()
+   {
+      return title;
+   }
+
+   /**
+    * Set the title
+    * @param title The value
+    */
+   public void setTitle(String title)
+   {
+      this.title = title;
+   }
+
+   /**
+    * Get the extractPattern
+    * @return The value
+    */
+   public String getExtractPattern()
+   {
+      return extractPattern;
+   }
+
+   /**
+    * Set the extractPattern
+    * @param extractPattern The value
+    */
+   public void setExtractPattern(String extractPattern)
+   {
+      this.extractPattern = extractPattern;
+   }
+
+   /**
+    * Get the bundlePattern
+    * @return The value
+    */
+   public String getBundlePattern()
+   {
+      return bundlePattern;
+   }
+
+   /**
+    * Set the bundlePattern
+    * @param bundlePattern The value
+    */
+   public void setBundlePattern(String bundlePattern)
+   {
+      this.bundlePattern = bundlePattern;
+   }
+
+   /**
+    * Get the analyzeComponents
+    * @return The value
+    */
+   public boolean getAnalyzeComponents()
+   {
+      return analyzeComponents;
+   }
+
+   /**
+    * Set the analyzeComponents
+    * @param analyzeComponents The value
+    */
+   public void setAnalyzeComponents(boolean analyzeComponents)
+   {
+      this.analyzeComponents = analyzeComponents;
+   }
+
+   /**
+    * Extract tattletale-related properties from Ant project
+    * @return Properties
+    */
+   public Properties getProperties()
+   {
+      final String pattern = "tattletale.";
+      final Properties properties = new Properties();
+      final Map<String,Object> pproperties = getProject().getProperties();
+      for (Entry<String, Object> property : pproperties.entrySet())
+      {
+         String key = property.getKey();
+         if (key.startsWith(pattern))
+         {
+            properties.setProperty(key.replaceFirst(pattern, ""),
+                                   (String)property.getValue());
+         }
+      }
+      return properties;
+   }
+
+   /**
     * Execute
-    *
     * @throws BuildException If the build fails
     */
    @Override
@@ -288,11 +380,11 @@ public class ReportTask extends AbstractReportTask
    {
       try
       {
-         Main main = new Main();
+         final Main main = new Main();
 
          main.setSource(getSource());
          main.setDestination(getDestination());
-         main.setConfiguration(getConfiguration());
+         main.setConfigurationFile(getConfiguration());
          main.setFilter(getFilter());
          main.setClassLoaderStructure(getClassloader());
          main.setProfiles(getProfiles());
@@ -304,10 +396,14 @@ public class ReportTask extends AbstractReportTask
          main.setDeleteOutputDirectory(getDeleteOutputDirectory());
          main.setReports(getReports());
          main.setScan(getScan());
+         main.setTitle(getTitle());
+         main.setExtractPattern(getExtractPattern());
+         main.setBundlePattern(getBundlePattern());
+         main.setConfiguration(getProperties());
 
          System.out.println("Scanning: " + getSource());
 
-         main.execute();
+         main.execute(analyzeComponents);
       }
       catch (Throwable t)
       {

@@ -22,16 +22,15 @@
 
 package org.jboss.tattletale.reporting;
 
-import org.jboss.tattletale.core.Archive;
-import org.jboss.tattletale.core.NestableArchive;
-import org.jboss.tattletale.profiles.Profile;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.jboss.tattletale.core.Archive;
+import org.jboss.tattletale.core.NestableArchive;
+import org.jboss.tattletale.profiles.Profile;
 
 /**
  * Depends On report
@@ -47,17 +46,14 @@ public class DependsOnReport extends CLSReport
    /** DIRECTORY */
    private static final String DIRECTORY = "dependson";
 
-
    /** Constructor */
    public DependsOnReport()
    {
       super(DIRECTORY, ReportSeverity.INFO, NAME, DIRECTORY);
    }
 
-
    /**
     * write out the report's content
-    *
     * @param bw the writer to use
     * @throws IOException if an error occurs
     */
@@ -66,18 +62,14 @@ public class DependsOnReport extends CLSReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Archive</th>" + Dump.newLine());
-      bw.write("     <th>Depends On</th>" + Dump.newLine());
+      bw.write("    <th>Archive</th>" + Dump.newLine());
+      bw.write("    <th>Depends On</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       boolean odd = true;
 
       for (Archive archive : archives)
       {
-         String archiveName = archive.getName();
-         int finalDot = archiveName.lastIndexOf(".");
-         String extension = archiveName.substring(finalDot + 1);
-
          if (odd)
          {
             bw.write("  <tr class=\"rowodd\">" + Dump.newLine());
@@ -86,38 +78,33 @@ public class DependsOnReport extends CLSReport
          {
             bw.write("  <tr class=\"roweven\">" + Dump.newLine());
          }
-         bw.write("     <td><a href=\"../" + extension + "/" + archiveName + ".html\">" +
-               archiveName + "</a></td>" + Dump.newLine());
-         bw.write("     <td>");
+         bw.write("    <td>" + hrefToArchiveReport(archive) + "</td>" + Dump.newLine());
+         bw.write("    <td>");
 
          SortedSet<String> result = new TreeSet<String>();
 
          for (String require : getRequires(archive))
          {
-
             boolean found = false;
-            Iterator<Archive> ait = archives.iterator();
-            while (!found && ait.hasNext())
-            {
-               Archive a = ait.next();
 
-               if (a.doesProvide(require) && (getCLS() == null || getCLS().isVisible(archive, a)))
+            for (Archive a : archives)
+            {
+               if (a.doesProvide(require) && (null == getCLS() || getCLS().isVisible(archive, a)))
                {
                   result.add(a.getName());
                   found = true;
+                  break;
                }
             }
 
             if (!found)
             {
-               Iterator<Profile> kit = getKnown().iterator();
-               while (!found && kit.hasNext())
+               for (Profile profile : getKnown())
                {
-                  Profile profile = kit.next();
-
                   if (profile.doesProvide(require))
                   {
                      found = true;
+                     break;
                   }
                }
             }
@@ -128,57 +115,58 @@ public class DependsOnReport extends CLSReport
             }
          }
 
-         if (result.size() == 0)
+         if (0 == result.size())
          {
             bw.write("&nbsp;");
          }
          else
          {
-            Iterator<String> resultIt = result.iterator();
-            while (resultIt.hasNext())
+            StringBuffer list = new StringBuffer();
+            for (String r : result)
             {
-               String r = resultIt.next();
-               if (r.endsWith(".jar") || r.endsWith(".war") || r.endsWith(".ear"))
+               if (r.endsWith(".jar") || r.endsWith(".war") || r.endsWith(".rar") || r.endsWith(".ear"))
                {
-                  bw.write("<a href=\"../" + extension + "/" + r + ".html\">" + r + "</a>");
+                  list.append(hrefToReport(r));
                }
                else
                {
                   if (!isFiltered(archive.getName(), r))
                   {
-                     bw.write("<i>" + r + "</i>");
+                     list.append("<i>" + r + "</i>");
                      status = ReportStatus.YELLOW;
                   }
                   else
                   {
-                     bw.write("<i style=\"text-decoration: line-through;\">" + r + "</i>");
+                     list.append("<i style=\"text-decoration: line-through;\">" + r + "</i>");
                   }
                }
-
-               if (resultIt.hasNext())
-               {
-                  bw.write(", ");
-               }
+               list.append(", ");
             }
+            list.setLength(list.length() - 2);
+            bw.write(list.toString());
          }
 
          bw.write("</td>" + Dump.newLine());
          bw.write("  </tr>" + Dump.newLine());
 
          odd = !odd;
-
       }
 
       bw.write("</table>" + Dump.newLine());
    }
 
+   /**
+    * Method getRequires.
+    * @param archive Archive
+    * @return SortedSet<String>
+    */
    private SortedSet<String> getRequires(Archive archive)
    {
-      SortedSet<String> requires = new TreeSet<String>();
+      final SortedSet<String> requires = new TreeSet<String>();
       if (archive instanceof NestableArchive)
       {
-         NestableArchive nestableArchive = (NestableArchive) archive;
-         List<Archive> subArchives = nestableArchive.getSubArchives();
+         final NestableArchive nestableArchive = (NestableArchive) archive;
+         final List<Archive> subArchives = nestableArchive.getSubArchives();
          for (Archive sa : subArchives)
          {
             requires.addAll(getRequires(sa));
@@ -192,24 +180,4 @@ public class DependsOnReport extends CLSReport
       }
       return requires;
    }
-
-   /**
-    * write out the header of the report's content
-    *
-    * @param bw the writer to use
-    * @throws IOException if an error occurs
-    */
-   public void writeHtmlBodyHeader(BufferedWriter bw) throws IOException
-   {
-      bw.write("<body>" + Dump.newLine());
-      bw.write(Dump.newLine());
-
-      bw.write("<h1>" + NAME + "</h1>" + Dump.newLine());
-
-      bw.write("<a href=\"../index.html\">Main</a>" + Dump.newLine());
-      bw.write("<p>" + Dump.newLine());
-
-   }
-
-
 }

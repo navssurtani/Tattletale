@@ -21,6 +21,10 @@
  */
 package org.jboss.tattletale.reporting;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+
 import org.jboss.tattletale.core.Archive;
 
 /**
@@ -31,28 +35,67 @@ import org.jboss.tattletale.core.Archive;
 public abstract class ArchiveReport extends AbstractReport
 {
    /** The archive */
-   protected Archive archive;
+   protected final Archive archive;
 
    /**
     * Constructor
-    *
     * @param id       The report id
     * @param severity The severity
     * @param archive  The archive
     */
-   public ArchiveReport(String id, int severity, Archive archive)
+   protected ArchiveReport(String id, ReportSeverity severity, Archive archive)
    {
-      super(id, severity);
+      super(id, severity, archive.getName(), id);
       this.archive = archive;
    }
 
    /**
     * Get the name of the report
-    *
     * @return The name
+    * @see org.jboss.tattletale.reporting.Report#getName()
     */
    public String getName()
    {
       return archive.getName();
+   }
+
+   /**
+    * Method join.
+    * @param input SortedSet<String>
+    * @param joiner String
+    * @return String
+    */
+   protected String join(SortedSet<String> input, String joiner)
+   {
+      if (null == input)
+      {
+         return "";
+      }
+      return join(new ArrayList<String>(input),joiner);
+   }
+
+   /**
+    * Method join.
+    * @param input List<String>
+    * @param joiner String
+    * @return String
+    */
+   protected String join(List<String> input, String joiner)
+   {
+      if (null == input || 0 == input.size())
+      {
+         return "";
+      }
+      if (null == joiner)
+      {
+         joiner = "";
+      }
+      final StringBuffer list = new StringBuffer();
+      for (String m : input)
+      {
+         list.append(m).append(joiner);
+      }
+      list.setLength(list.length() - joiner.length());
+      return list.toString();
    }
 }

@@ -23,29 +23,25 @@ package org.jboss.tattletale.reporting;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.jboss.tattletale.core.Archive;
-import org.jboss.tattletale.core.NestableArchive;
 
 /**
- * Dependants report
+ * Signing information report
  *
  * @author Jesper Pedersen <jesper.pedersen@jboss.org>
  * @author <a href="mailto:torben.jaeger@jit-consulting.de">Torben Jaeger</a>
  */
-public class DependantsReport extends CLSReport
+public class SignedReport extends AbstractReport
 {
    /** NAME */
-   private static final String NAME = "Dependants";
+   private static final String NAME = "Signed";
 
    /** DIRECTORY */
-   private static final String DIRECTORY = "dependants";
+   private static final String DIRECTORY = "signed";
 
    /** Constructor */
-   public DependantsReport()
+   public SignedReport()
    {
       super(DIRECTORY, ReportSeverity.INFO, NAME, DIRECTORY);
    }
@@ -61,10 +57,13 @@ public class DependantsReport extends CLSReport
 
       bw.write("  <tr>" + Dump.newLine());
       bw.write("    <th>Archive</th>" + Dump.newLine());
-      bw.write("    <th>Dependants</th>" + Dump.newLine());
+      bw.write("    <th>Status</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       boolean odd = true;
+
+      int signed = 0;
+      int unsigned = 0;
 
       for (Archive archive : archives)
       {
@@ -77,68 +76,75 @@ public class DependantsReport extends CLSReport
             bw.write("  <tr class=\"roweven\">" + Dump.newLine());
          }
          bw.write("    <td>" + hrefToArchiveReport(archive) + "</td>" + Dump.newLine());
-         bw.write("    <td>");
-
-         SortedSet<String> result = new TreeSet<String>();
-
-         for (Archive a : archives)
+         if (null != archive.getSign())
          {
-            for (String require : getRequires(archive))
-            {
-               if (archive.doesProvide(require) && (null == getCLS() || getCLS().isVisible(a, archive)))
-               {
-                  result.add(a.getName());
-               }
-            }
-         }
-
-         if (0 == result.size())
-         {
-            bw.write("&nbsp;");
+            bw.write("    <td style=\"color: red;\">Signed</td>" + Dump.newLine());
+            signed++;
          }
          else
          {
-            StringBuffer list = new StringBuffer();
-            for (String r : result)
-            {
-               String tag = (r.endsWith(".jar")) ? hrefToReport(r) : "<i>" + r + "</i>";
-               list.append(tag).append(", ");
-            }
-            list.setLength(list.length() - 2);
-            bw.write(list.toString());
+            bw.write("    <td style=\"color: green;\">Unsigned</td>" + Dump.newLine());
+            unsigned++;
          }
-
-         bw.write("</td>" + Dump.newLine());
          bw.write("  </tr>" + Dump.newLine());
 
          odd = !odd;
       }
 
       bw.write("</table>" + Dump.newLine());
-   }
+      bw.write("</p>" + Dump.newLine());
 
-   /**
-    * Method getRequires.
-    * @param archive Archive
-    * @return SortedSet<String>
-    */
-   private SortedSet<String> getRequires(Archive archive)
-   {
-      final SortedSet<String> requires = new TreeSet<String>();
-      if (archive instanceof NestableArchive)
+      boolean filtered = isFiltered();
+      if (signed > 0 && unsigned > 0 && !filtered)
       {
-         final NestableArchive nestableArchive = (NestableArchive) archive;
-         final List<Archive> subArchives = nestableArchive.getSubArchives();
-         requires.addAll(nestableArchive.getRequires());
-         for (Archive sa : subArchives)
-         {
-            requires.addAll(getRequires(sa));
-         }
+         status = ReportStatus.YELLOW;
+      }
+
+      bw.write(Dump.newLine());
+      bw.write("<p>" + Dump.newLine());
+
+      bw.write("<table>" + Dump.newLine());
+
+      bw.write("  <tr>" + Dump.newLine());
+      bw.write("    <th>Status</th>" + Dump.newLine());
+      bw.write("    <th>Archives</th>" + Dump.newLine());
+      bw.write("  </tr>" + Dump.newLine());
+
+      bw.write("  <tr class=\"rowodd\">" + Dump.newLine());
+      bw.write("    <td>Signed</td>" + Dump.newLine());
+      if (!filtered)
+      {
+         bw.write("    <td style=\"color: red;\">" + signed + "</td>" + Dump.newLine());
       }
       else
       {
-         requires.addAll(archive.getRequires());
+         bw.write("    <td style=\"color: red; text-decoration: line-through;\">" + signed + "</td>" + Dump.newLine());
       }
-      return requires;
+      bw.write("  </tr>" + Dump.newLine());
+
+      bw.write("  <tr class=\"roweven\">" + Dump.newLine());
+      bw.write("    <td>Unsigned</td>" + Dump.newLine());
+      if (!filtered)
+      {
+         bw.write("    <td style=\"color: green;\">" + unsigned + "</td>" + Dump.newLine());
+      }
+      else
+      {
+         bw.write("    <td style=\"color: green; text-decoration: line-through;\">"
+                  + unsigned + "</td>" + Dump.newLine());
+      }
+      bw.write("  </tr>" + Dump.newLine());
+
+      bw.write("</table>" + Dump.newLine());
+   }
+
+   /**
+    * Create filter
+    * @return The filter
+    */
+   @Override
+   protected Filter createFilter()
+   {
+      return new BooleanFilter();
    }
 }

@@ -23,7 +23,6 @@ package org.jboss.tattletale.reporting;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -39,7 +38,7 @@ import java.util.TreeSet;
 public class PackageMultipleJarsReport extends AbstractReport
 {
    /** NAME */
-   private static final String NAME = "Multiple Jar files (Packages)";
+   private static final String NAME = "Multiple Packages";
 
    /** DIRECTORY */
    private static final String DIRECTORY = "multiplejarspackage";
@@ -53,10 +52,8 @@ public class PackageMultipleJarsReport extends AbstractReport
       super(DIRECTORY, ReportSeverity.WARNING, NAME, DIRECTORY);
    }
 
-
    /**
     * Set the globally provides map to be used in generating this report
-    *
     * @param gProvides the map of global provides
     */
    public void setGlobalProvides(SortedMap<String, SortedSet<String>> gProvides)
@@ -66,7 +63,6 @@ public class PackageMultipleJarsReport extends AbstractReport
 
    /**
     * write the report's content
-    *
     * @param bw the BufferedWriter to use
     * @throws IOException if an error occurs
     */
@@ -76,16 +72,16 @@ public class PackageMultipleJarsReport extends AbstractReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Package</th>" + Dump.newLine());
-      bw.write("     <th>Jar files</th>" + Dump.newLine());
+      bw.write("    <th>Package</th>" + Dump.newLine());
+      bw.write("    <th>Jar files</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
-      SortedMap<String, SortedSet<String>> packageProvides = new TreeMap<String, SortedSet<String>>();
+      final SortedMap<String, SortedSet<String>> packageProvides = new TreeMap<String, SortedSet<String>>();
 
       for (Map.Entry<String, SortedSet<String>> entry : gProvides.entrySet())
       {
-         String clz = (String) ((Map.Entry) entry).getKey();
-         SortedSet archives = (SortedSet) ((Map.Entry) entry).getValue();
+         String clz = entry.getKey();
+         SortedSet<String> archives = entry.getValue();
 
          String packageName = null;
 
@@ -99,7 +95,7 @@ public class PackageMultipleJarsReport extends AbstractReport
          }
 
          SortedSet<String> packageJars = packageProvides.get(packageName);
-         if (packageJars == null)
+         if (null == packageJars)
          {
             packageJars = new TreeSet<String>();
          }
@@ -113,8 +109,8 @@ public class PackageMultipleJarsReport extends AbstractReport
 
       for (Map.Entry<String, SortedSet<String>> entry : packageProvides.entrySet())
       {
-         String pkg = (String) ((Map.Entry) entry).getKey();
-         SortedSet archives = (SortedSet) ((Map.Entry) entry).getValue();
+         String pkg = entry.getKey();
+         SortedSet<String> archives = entry.getValue();
 
          if (archives.size() > 1)
          {
@@ -132,7 +128,9 @@ public class PackageMultipleJarsReport extends AbstractReport
             {
                bw.write("  <tr class=\"roweven\">" + Dump.newLine());
             }
-            bw.write("     <td>" + pkg + "</td>" + Dump.newLine());
+
+            bw.write("    <td>" + pkg + "</td>" + Dump.newLine());
+
             if (!filtered)
             {
                bw.write("        <td>");
@@ -142,17 +140,13 @@ public class PackageMultipleJarsReport extends AbstractReport
                bw.write("        <td style=\"text-decoration: line-through;\">");
             }
 
-            Iterator sit = archives.iterator();
-            while (sit.hasNext())
+            StringBuffer list = new StringBuffer();
+            for (String archive : archives)
             {
-               String archive = (String) sit.next();
-               bw.write("<a href=\"../jar/" + archive + ".html\">" + archive + "</a>" + Dump.newLine());
-
-               if (sit.hasNext())
-               {
-                  bw.write(", ");
-               }
+               list.append(hrefToReport(archive)).append(", ");
             }
+            list.setLength(list.length() - 2);
+            bw.write(list.toString());
 
             bw.write("</td>" + Dump.newLine());
             bw.write("  </tr>" + Dump.newLine());
@@ -164,21 +158,8 @@ public class PackageMultipleJarsReport extends AbstractReport
       bw.write("</table>" + Dump.newLine());
    }
 
-   @Override
-   public void writeHtmlBodyHeader(BufferedWriter bw) throws IOException
-   {
-      bw.write("<body>" + Dump.newLine());
-      bw.write(Dump.newLine());
-
-      bw.write("<h1>" + NAME + "</h1>" + Dump.newLine());
-
-      bw.write("<a href=\"../index.html\">Main</a>" + Dump.newLine());
-      bw.write("<p>" + Dump.newLine());
-   }
-
    /**
     * Create filter
-    *
     * @return The filter
     */
    @Override

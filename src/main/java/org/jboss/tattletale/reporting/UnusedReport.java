@@ -21,34 +21,32 @@
  */
 package org.jboss.tattletale.reporting;
 
-import org.jboss.tattletale.core.Archive;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import org.jboss.tattletale.core.Archive;
+
 /**
- * Signing information report
+ * A report that shows unused JAR archives
  *
  * @author Jesper Pedersen <jesper.pedersen@jboss.org>
- * @author <a href="mailto:torben.jaeger@jit-consulting.de">Torben Jaeger</a>
  */
-public class SignReport extends AbstractReport
+public class UnusedReport extends AbstractReport
 {
    /** NAME */
-   private static final String NAME = "Signing information";
+   private static final String NAME = "Unused";
 
    /** DIRECTORY */
-   private static final String DIRECTORY = "sign";
+   private static final String DIRECTORY = "unused";
 
    /** Constructor */
-   public SignReport()
+   public UnusedReport()
    {
-      super(DIRECTORY, ReportSeverity.INFO, NAME, DIRECTORY);
+      super(DIRECTORY, ReportSeverity.WARNING, NAME, DIRECTORY);
    }
 
    /**
-    * write out the report's content
-    *
+    * Write out the report's content
     * @param bw the writer to use
     * @throws IOException if an error occurs
     */
@@ -57,21 +55,37 @@ public class SignReport extends AbstractReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Archive</th>" + Dump.newLine());
-      bw.write("     <th>Status</th>" + Dump.newLine());
+      bw.write("    <th>Archive</th>" + Dump.newLine());
+      bw.write("    <th>Used</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       boolean odd = true;
-
-      int signed = 0;
-      int unsigned = 0;
+      int used = 0;
+      int unused = 0;
 
       for (Archive archive : archives)
       {
-
+         boolean archiveStatus = false;
          String archiveName = archive.getName();
-         int finalDot = archiveName.lastIndexOf(".");
-         String extension = archiveName.substring(finalDot + 1);
+
+         for (Archive a : archives)
+         {
+            if (!archiveName.equals(a.getName()))
+            {
+               for (String require : a.getRequires())
+               {
+                  if (archive.getProvides().keySet().contains(require))
+                  {
+                     archiveStatus = true;
+                     break;
+                  }
+               }
+            }
+            if (archiveStatus)
+            {
+               break;
+            }
+         }
 
          if (odd)
          {
@@ -81,30 +95,35 @@ public class SignReport extends AbstractReport
          {
             bw.write("  <tr class=\"roweven\">" + Dump.newLine());
          }
-         bw.write("     <td><a href=\"../" + extension + "/" + archiveName +
-                  ".html\">" + archive.getName() + "</a></td>" + Dump.newLine());
-         if (archive.getSign() != null)
+         bw.write("    <td>" + hrefToArchiveReport(archive) + "</td>" + Dump.newLine());
+
+         if (archiveStatus)
          {
-            bw.write("     <td style=\"color: red;\">Signed</td>" + Dump.newLine());
-            signed++;
+            bw.write("    <td style=\"color: green;\">Yes</td>" + Dump.newLine());
+            used++;
          }
          else
          {
-            bw.write("     <td style=\"color: green;\">Unsigned</td>" + Dump.newLine());
-            unsigned++;
+            unused++;
+
+            if (!isFiltered(archiveName))
+            {
+               status = ReportStatus.YELLOW;
+               bw.write("    <td style=\"color: red;\">No</td>" + Dump.newLine());
+            }
+            else
+            {
+               bw.write("    <td style=\"color: red; text-decoration: line-through;\">No</td>" + Dump.newLine());
+            }
          }
+
          bw.write("  </tr>" + Dump.newLine());
 
          odd = !odd;
       }
 
       bw.write("</table>" + Dump.newLine());
-
-      boolean filtered = isFiltered();
-      if (signed > 0 && unsigned > 0 && !filtered)
-      {
-         status = ReportStatus.YELLOW;
-      }
+      bw.write("</p>" + Dump.newLine());
 
       bw.write(Dump.newLine());
       bw.write("<p>" + Dump.newLine());
@@ -112,63 +131,30 @@ public class SignReport extends AbstractReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Status</th>" + Dump.newLine());
-      bw.write("     <th>Archives</th>" + Dump.newLine());
+      bw.write("    <th>Status</th>" + Dump.newLine());
+      bw.write("    <th>Archives</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       bw.write("  <tr class=\"rowodd\">" + Dump.newLine());
-      bw.write("     <td>Signed</td>" + Dump.newLine());
-      if (!filtered)
-      {
-         bw.write("     <td style=\"color: red;\">" + signed + "</td>" + Dump.newLine());
-      }
-      else
-      {
-         bw.write("     <td style=\"color: red; text-decoration: line-through;\">" + signed + "</td>" + Dump.newLine());
-      }
+      bw.write("    <td>Used</td>" + Dump.newLine());
+      bw.write("    <td style=\"color: green;\">" + used + "</td>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       bw.write("  <tr class=\"roweven\">" + Dump.newLine());
-      bw.write("     <td>Unsigned</td>" + Dump.newLine());
-      if (!filtered)
-      {
-         bw.write("     <td style=\"color: green;\">" + unsigned + "</td>" + Dump.newLine());
-      }
-      else
-      {
-         bw.write("     <td style=\"color: green; text-decoration: line-through;\">"
-                  + unsigned + "</td>" + Dump.newLine());
-      }
+      bw.write("    <td>Unused</td>" + Dump.newLine());
+      bw.write("    <td style=\"color: red;\">" + unused + "</td>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       bw.write("</table>" + Dump.newLine());
    }
 
    /**
-    * write out the header of the report's content
-    *
-    * @param bw the writer to use
-    * @throws IOException if an errror occurs
-    */
-   public void writeHtmlBodyHeader(BufferedWriter bw) throws IOException
-   {
-      bw.write("<body>" + Dump.newLine());
-      bw.write(Dump.newLine());
-
-      bw.write("<h1>" + NAME + "</h1>" + Dump.newLine());
-
-      bw.write("<a href=\"../index.html\">Main</a>" + Dump.newLine());
-      bw.write("<p>" + Dump.newLine());
-   }
-
-   /**
     * Create filter
-    *
     * @return The filter
     */
    @Override
    protected Filter createFilter()
    {
-      return new BooleanFilter();
+      return new KeyFilter();
    }
 }

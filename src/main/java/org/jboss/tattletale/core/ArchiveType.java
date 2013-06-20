@@ -26,22 +26,18 @@ package org.jboss.tattletale.core;
  *
  * @author Jesper Pedersen <jesper.pedersen@jboss.org>
  */
-public class ArchiveTypes
+public enum ArchiveType
 {
-   /** CLASS */
-   public static final int CLASS = 0;
+   CLASS,
+   JAR,
+   WAR,
+   EAR;
 
-   /** JAR */
-   public static final int JAR = 1;
-
-   /** WAR */
-   public static final int WAR = 2;
-
-   /** EAR */
-   public static final int EAR = 3;
-
-   /** Constructor */
-   private ArchiveTypes()
-   {
+   /**
+    * @return lowercase string corresponding to file extension
+    */
+   @Override
+   public String toString() {
+      return super.toString().toLowerCase();
    }
 }

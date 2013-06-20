@@ -22,15 +22,14 @@
 package org.jboss.tattletale.analyzers;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  * Directory scanner
@@ -39,13 +38,13 @@ import java.util.StringTokenizer;
  */
 public class DirectoryScanner
 {
-   /** Archives types that should be scanned */
-   private static Set<String> archives = new HashSet<String>();
+   /** Archive types that should be scanned */
+   private static final Set<String> ARCHIVES = new HashSet<String>();
 
    static
    {
-      archives.add(".jar");
-      archives.add(".war");
+      ARCHIVES.add(".jar");
+      ARCHIVES.add(".war");
    }
 
    /** Constructor */
@@ -55,39 +54,34 @@ public class DirectoryScanner
 
    /**
     * Set archives
-    *
     * @param scan The archives
     */
    public static void setArchives(String scan)
    {
-      archives.clear();
+      ARCHIVES.clear();
 
-      if (scan != null)
+      if (null != scan)
       {
-         StringTokenizer st = new StringTokenizer(scan, ",");
-         while (st.hasMoreTokens())
+         for (String token : scan.split("[\\s,]+"))
          {
-            String token = st.nextToken();
-
-            if (token.startsWith("*"))
+            if (token.length() > 0 && '*' == token.charAt(0))
             {
                token = token.substring(1);
             }
 
-            archives.add(token.toLowerCase(Locale.US));
+            ARCHIVES.add(token.toLowerCase(Locale.US));
          }
       }
 
-      if (archives.isEmpty())
+      if (ARCHIVES.isEmpty())
       {
-         archives.add(".jar");
-         archives.add(".war");
+         ARCHIVES.add(".jar");
+         ARCHIVES.add(".war");
       }
    }
 
    /**
     * Scan a directory for JAR files
-    *
     * @param file The root directory
     * @return The list of JAR files
     */
@@ -96,10 +90,8 @@ public class DirectoryScanner
       return scan(file, null);
    }
 
-
    /**
     * Scan a directory for JAR files
-    *
     * @param file     The root directory
     * @param excludes The set of excludes
     * @return The list of files
@@ -109,40 +101,44 @@ public class DirectoryScanner
       try
       {
          return getFileListing(file, excludes);
-
       }
-      catch (Exception e)
+      catch (IOException ioe)
       {
-         System.err.println(e.getMessage());
+         System.err.println(ioe.getMessage());
       }
 
       return null;
    }
 
-
    /**
-    * Recursively walk a directory tree and return a List of all
-    * Files found; the List is sorted using File.compareTo().
-    *
+    * Recursively walk a directory tree and return a List of all Files found;
+    * the List is sorted using File.compareTo().
     * @param aStartingDir is a valid directory, which can be read.
     * @param excludes     The set of excludes
-    * @return - the list of the files without the specific exclusions
-    * @throws Exception
+    * @return The list of the files without the specific exclusions
+    * @throws IOException
     */
-   private static List<File> getFileListing(File aStartingDir, Set<String> excludes) throws Exception
+   private static List<File> getFileListing(File aStartingDir, Set<String> excludes) throws IOException
    {
-      List<File> result = getFileListingNoSort(aStartingDir, excludes);
+      final List<File> result = getFileListingNoSort(aStartingDir, excludes);
       Collections.sort(result);
       return result;
    }
 
-   private static List<File> getFileListingNoSort(File aStartingDir, Set<String> excludes) throws Exception
+   /**
+    * Method getFileListingNoSort.
+    * @param aStartingDir File
+    * @param excludes Set<String>
+    * @return List<File>
+    * @throws IOException
+    */
+   private static List<File> getFileListingNoSort(File aStartingDir, Set<String> excludes) throws IOException
    {
-      List<File> result = new ArrayList<File>();
+      final List<File> result = new ArrayList<File>();
 
-      File[] filesAndDirs = aStartingDir.listFiles();
+      final File[] filesAndDirs = aStartingDir.listFiles();
 
-      List<File> filesDirs = Arrays.asList(filesAndDirs);
+      final List<File> filesDirs = Arrays.asList(filesAndDirs);
 
       for (File file : filesDirs)
       {
@@ -150,25 +146,23 @@ public class DirectoryScanner
          {
             String extension = null;
 
-            if (file.getName().lastIndexOf(".") != -1)
+            if (file.getName().lastIndexOf('.') != -1)
             {
-               extension = file.getName().substring(file.getName().lastIndexOf("."));
+               extension = file.getName().substring(file.getName().lastIndexOf('.'));
             }
 
-            if (extension != null && archives.contains(extension))
+            if (null != extension && ARCHIVES.contains(extension))
             {
                boolean include = true;
 
-               if (excludes != null)
+               if (null != excludes)
                {
-                  Iterator<String> it = excludes.iterator();
-                  while (include && it.hasNext())
+                  for (String exclude : excludes)
                   {
-                     String exclude = it.next();
-
                      if (file.getName().equals(exclude) || file.getAbsolutePath().indexOf(exclude) != -1)
                      {
                         include = false;
+                        break;
                      }
                   }
                }

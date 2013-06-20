@@ -21,16 +21,15 @@
  */
 package org.jboss.tattletale.reporting;
 
-import org.jboss.tattletale.core.Archive;
-import org.jboss.tattletale.core.NestableArchive;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
+
+import org.jboss.tattletale.core.Archive;
+import org.jboss.tattletale.core.NestableArchive;
 
 /**
  * Blacklisted report
@@ -41,7 +40,7 @@ import java.util.TreeMap;
 public class BlackListedReport extends AbstractReport
 {
    /** NAME */
-   private static final String NAME = "Black listed";
+   private static final String NAME = "Blacklisted";
 
    /** DIRECTORY */
    private static final String DIRECTORY = "blacklisted";
@@ -54,7 +53,6 @@ public class BlackListedReport extends AbstractReport
 
    /**
     * write out the report's content
-    *
     * @param bw the writer to use
     * @throws IOException if an error occurs
     */
@@ -63,23 +61,19 @@ public class BlackListedReport extends AbstractReport
       bw.write("<table>" + Dump.newLine());
 
       bw.write("  <tr>" + Dump.newLine());
-      bw.write("     <th>Archive</th>" + Dump.newLine());
-      bw.write("     <th>Usage</th>" + Dump.newLine());
+      bw.write("    <th>Archive</th>" + Dump.newLine());
+      bw.write("    <th>Usage</th>" + Dump.newLine());
       bw.write("  </tr>" + Dump.newLine());
 
       boolean odd = true;
 
       for (Archive archive : archives)
       {
-         String archiveName = archive.getName();
-         int finalDot = archiveName.lastIndexOf(".");
-         String extension = archiveName.substring(finalDot + 1);
-
          SortedMap<String, SortedSet<String>> blacklisted = getBlackListedDeps(archive);
          boolean include = false;
          boolean filtered = isFiltered(archive.getName());
 
-         if (blacklisted != null && blacklisted.size() > 0)
+         if (null != blacklisted && blacklisted.size() > 0)
          {
             include = true;
 
@@ -99,35 +93,28 @@ public class BlackListedReport extends AbstractReport
             {
                bw.write("  <tr class=\"roweven\">" + Dump.newLine());
             }
-            bw.write("     <td><a href=\"../" + extension + "/" + archiveName + ".html\">"
-                  + archive.getName() + "</a></td>" + Dump.newLine());
-            bw.write("     <td>");
+            bw.write("    <td>" + hrefToArchiveReport(archive) + "</td>" + Dump.newLine());
+            bw.write("    <td>" + Dump.newLine());
 
-            bw.write("       <table>" + Dump.newLine());
+            bw.write("      <table>" + Dump.newLine());
 
-            for (Map.Entry<String, SortedSet<String>> stringSortedSetEntry :
-                  blacklisted.entrySet())
+            for (Map.Entry<String, SortedSet<String>> stringSortedSetEntry : blacklisted.entrySet())
             {
-
-               String pkg = stringSortedSetEntry.getKey();
-               SortedSet<String> blpkgs = stringSortedSetEntry.getValue();
-
                bw.write("      <tr>" + Dump.newLine());
-
-               bw.write("        <td>" + pkg + "</td>" + Dump.newLine());
+               bw.write("        <td>" + stringSortedSetEntry.getKey() + "</td>" + Dump.newLine());
 
                if (!filtered)
                {
-                  bw.write("       <td>");
+                  bw.write("      <td>");
                }
                else
                {
-                  bw.write("       <td style=\"text-decoration: line-through;\">");
+                  bw.write("      <td style=\"text-decoration: line-through;\">");
                }
 
-               for (String blp : blpkgs)
+               for (String blp : stringSortedSetEntry.getValue())
                {
-                  bw.write(blp + "<br>");
+                  bw.write(blp + "<br/>");
                }
 
                bw.write("</td>" + Dump.newLine());
@@ -135,29 +122,30 @@ public class BlackListedReport extends AbstractReport
                bw.write("      </tr>" + Dump.newLine());
             }
 
-            bw.write("       </table>" + Dump.newLine());
+            bw.write("      </table>" + Dump.newLine());
 
-            bw.write("</td>" + Dump.newLine());
+            bw.write("    </td>" + Dump.newLine());
             bw.write("  </tr>" + Dump.newLine());
 
             odd = !odd;
-
-
          }
-
-         bw.write("</table>" + Dump.newLine());
       }
+      bw.write("</table>" + Dump.newLine());
    }
 
+   /**
+    * Method getBlackListedDeps.
+    * @param a Archive
+    * @return SortedMap<String,SortedSet<String>>
+    */
    private SortedMap<String, SortedSet<String>> getBlackListedDeps(Archive a)
    {
-      SortedMap<String, SortedSet<String>> deps = new TreeMap<String, SortedSet<String>>();
+      final SortedMap<String, SortedSet<String>> deps = new TreeMap<String, SortedSet<String>>();
       if (a instanceof NestableArchive)
       {
-         NestableArchive na = (NestableArchive) a;
-         List<Archive> subArchives = na.getSubArchives();
+         final NestableArchive na = (NestableArchive) a;
 
-         for (Archive sa : subArchives)
+         for (Archive sa : na.getSubArchives())
          {
             deps.putAll(getBlackListedDeps(sa));
          }
@@ -167,23 +155,6 @@ public class BlackListedReport extends AbstractReport
          deps.putAll(a.getBlackListedDependencies());
       }
       return deps;
-   }
-
-   /**
-    * write out the header of the report's content
-    *
-    * @param bw the writer to use
-    * @throws IOException if an error occurs
-    */
-   public void writeHtmlBodyHeader(BufferedWriter bw) throws IOException
-   {
-      bw.write("<body>" + Dump.newLine());
-      bw.write(Dump.newLine());
-
-      bw.write("<h1>" + NAME + "</h1>" + Dump.newLine());
-
-      bw.write("<a href=\"../index.html\">Main</a>" + Dump.newLine());
-      bw.write("<p>" + Dump.newLine());
    }
 
    /**
